@@ -1,35 +1,26 @@
-## Akka Persistence Samples
+# Introduction
 
-This tutorial contains examples that illustrate a subset of[Akka Persistence](http://doc.akka.io/docs/akka/2.5/java/persistence.html) features.
+This is a sample Akka/Java application that has a Customer service that allows you, via REST, to:
 
-- persistent actor
-- persistent actor snapshots
-- persistent actor recovery
-- persistent actor views
+1. Add a customer
+2. Get a customer
+3. List customers (via read-side view)
+4. Disable a customer (acting as a soft delete)
 
-Custom storage locations for the journal and snapshots can be defined in [application.conf](src/main/resources/application.conf).
+This implementation uses Cassandra for both the write-side and read-side.
 
-## Persistent actor
+# Example curl commands
 
-[PersistentActorExample.java](src/main/java/sample/persistence/PersistentActorExample.java) is described in detail in the [Event sourcing](http://doc.akka.io/docs/akka/2.5/java/persistence.html#event-sourcing-java) section of the user documentation. With every application run, the `ExamplePersistentActor` is recovered from events stored in previous application runs, processes new commands, stores new events and snapshots and prints the current persistent actor state to `stdout`.
+1. curl -H "Content-Type: application/json" -X POST -d '{"name": "Eric Murphy", "city": "San Francisco", "state": "CA", "zipCode": "94105"}' http://localhost:8080/customer
+2. curl http://localhost:8080/customer/51c25a39-39b8-4937-b56b-5cca7f79acc1
+3. curl http://localhost:8080/customer
+4. curl -X POST http://localhost:8080/customer/disable/51c25a39-39b8-4937-b56b-5cca7f79acc1
+5. curl http://localhost:8080/customer/51c25a39-39b8-4937-b56b-5cca7f79acc1 (run again to check disabled)
 
-To run this example, type `sbt "runMain sample.persistence.PersistentActorExample"` or `mvn compile exec:java -Dexec.mainClass="sample.persistence.PersistentActorExample"`.
+# Caveats (may be revisited)
 
-## Persistent actor snapshots
+1. Could not get Akka Persistence Query readJournal.eventsByTag working which would improve the read-side implementation with an offset
+2. Using raw underlying Cassandra Session for read-side since I had trouble making a new Akka Persistence CassandraSession. Should not reuse the same one from the write-side
 
-[SnapshotExample.java](src/main/java/sample/persistence/SnapshotExample.java) demonstrates how persistent actors can take snapshots of application state and recover from previously stored snapshots. Snapshots are offered to persistent actors at the beginning of recovery, before any messages (younger than the snapshot) are replayed.
 
-To run this example, type `sbt "runMain sample.persistence.SnapshotExample"` or `mvn compile exec:java -Dexec.mainClass="sample.persistence.SnapshotExample"`. With every run, the state offered by the most recent snapshot is printed to `stdout`, followed by the updated state after sending new persistent messages to the persistent actor.
-
-## Persistent actor recovery
-
-[PersistentActorFailureExample.java](src/main/java/sample/persistence/PersistentActorFailureExample.java) shows how a persistent actor can throw an exception, restart and restore the state by replaying the events.
-
-To run this example, type `sbt "runMain sample.persistence.PersistentActorFailureExample"` or `mvn compile exec:java -Dexec.mainClass="sample.persistence.PersistentActorFailureExample"`.
-
-## Persistent actor views
-
-[ViewExample.java](src/main/java/sample/persistence/ViewExample.java) demonstrates how a view (`ExampleView`) is updated with the persistent message stream of a persistent actor (`ExamplePersistentActor`). Messages sent to the persistent actor are scheduled periodically. Views also support snapshotting to reduce recovery time.
-
-To run this example, type `sbt "runMain sample.persistence.PersistentViewExample"` or `mvn compile exec:java -Dexec.mainClass="sample.persistence.PersistentViewExample"`.
 
