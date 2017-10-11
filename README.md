@@ -21,7 +21,7 @@ This implementation uses Cassandra for both the write-side and read-side.
 
 1. Could not get Akka Persistence Query readJournal.eventsByTag working which would improve the read-side implementation with an offset
 2. Using raw underlying Cassandra Session for read-side since I had trouble making a new Akka Persistence CassandraSession. Should not reuse the same one from the write-side
-3. Unsure if interaction between Akka HTTP and Akka Persistence actors is optimal. For example, should I destroy the actor after the request is completed? The actor cannot be used as there is no reference to it upcon completion of request.
+3. Unsure if interaction between Akka HTTP and Akka Persistence actors is optimal. For example, should I destroy the actor after the request is completed? The actor cannot be used as there is no reference to it upon completion of request
 4. getCustomer should probably use the read-side rather than read from the Akka Persistence. However that is what I did with the Lagom implementation with the PersistentEntity
 5. Using default Java serializer rather than ProtoBuf or something better
 
