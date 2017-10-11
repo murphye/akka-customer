@@ -14,7 +14,7 @@ This implementation uses Cassandra for both the write-side and read-side.
 1. curl -H "Content-Type: application/json" -X POST -d '{"name": "Eric Murphy", "city": "San Francisco", "state": "CA", "zipCode": "94105"}' http://localhost:8080/customer
 2. curl http://localhost:8080/customer/51c25a39-39b8-4937-b56b-5cca7f79acc1
 3. curl http://localhost:8080/customer
-4. curl -X POST http://localhost:8080/customer/disable/51c25a39-39b8-4937-b56b-5cca7f79acc1
+4. curl -X PUT http://localhost:8080/customer/disable/51c25a39-39b8-4937-b56b-5cca7f79acc1
 5. curl http://localhost:8080/customer/51c25a39-39b8-4937-b56b-5cca7f79acc1 (run again to check disabled)
 
 # Caveats (may be revisited)

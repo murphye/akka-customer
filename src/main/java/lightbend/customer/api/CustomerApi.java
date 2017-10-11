@@ -47,7 +47,7 @@ public class CustomerApi {
     Route disableCustomer() {
         return pathPrefix("disable", () ->
                 path(PathMatchers.segment(), customerId ->
-                        post(() -> customerService.disableCustomer(customerId))
+                        put(() -> customerService.disableCustomer(customerId))
         ));
     }
 }
