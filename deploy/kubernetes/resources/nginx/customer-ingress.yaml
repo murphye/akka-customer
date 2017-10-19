@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+  name: customer-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          serviceName: customerservice
+          servicePort: 9000
+        path: /customer
+  tls:
+  - secretName: customer-tls-secret

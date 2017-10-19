@@ -1,0 +1,95 @@
+{
+  "apiVersion": "apps/v1beta1",
+  "kind": "StatefulSet",
+  "metadata": {
+    "name": "customerservice"
+  },
+  "spec": {
+    "serviceName": "customerservice",
+    "replicas": 1,
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "customerservice"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "customerservice",
+            "image": "lightbend/customer-impl",
+            "imagePullPolicy": "Never",
+            "ports": [
+              {
+                "containerPort": 9000,
+                "name": "http-api"
+              },
+              {
+                "containerPort": 2551,
+                "name": "akka-remote"
+              }
+            ],
+            "env": [
+              {
+                "name": "CASSANDRA_SERVICE_NAME",
+                "value": "_native._tcp.cassandra.default.svc.cluster.local"
+              },
+              {
+                "name": "APPLICATION_SECRET",
+                "value": "customerservice-application-secret"
+              },
+              {
+                "name": "CUSTOMERSERVICE_BIND_PORT",
+                "value": "9000"
+              },
+              {
+                "name": "CUSTOMERSERVICE_BIND_IP",
+                "value": "0.0.0.0"
+              },
+              {
+                "name": "AKKA_ACTOR_SYSTEM_NAME",
+                "value": "customerservice-v1"
+              },
+              {
+                "name": "AKKA_REMOTING_BIND_PORT",
+                "value": "2551"
+              },
+              {
+                "name": "AKKA_REMOTING_BIND_HOST",
+                "value": "$HOSTNAME.customerservice.default.svc.cluster.local"
+              },
+              {
+                "name": "AKKA_SEED_NODES",
+                "value": "customerservice-0.customerservice.default.svc.cluster.local:2551,customerservice-1.customerservice.default.svc.cluster.local:2551,customerservice-2.customerservice.default.svc.cluster.local:2551"
+              },
+              {
+                "name": "POD_NAME",
+                "valueFrom": {
+                  "fieldRef": {
+                    "fieldPath": "metadata.name"
+                  }
+                }
+              },
+              {
+                "name": "POD_NAMESPACE",
+                "valueFrom": {
+                  "fieldRef": {
+                    "fieldPath": "metadata.namespace"
+                  }
+                }
+              }
+            ],
+            "readinessProbe": {
+              "httpGet": {
+                "path": "/_status/circuit-breaker/current",
+                "port": 9000
+              },
+              "initialDelaySeconds": 5,
+              "periodSeconds": 5
+            }
+          }
+        ]
+      }
+    }
+  }
+}
