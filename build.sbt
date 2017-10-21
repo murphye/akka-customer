@@ -15,6 +15,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % "10.0.10",
   "com.typesafe.akka" %% "akka-http-jackson" % "10.0.10",
   "com.google.guava"  % "guava" % "23.0",
+  "com.github.romix.akka" %% "akka-kryo-serialization" % "0.5.1",
   "junit" % "junit" % "4.12" % "test",
   "com.typesafe.akka" %% "akka-testkit" % "2.5.6" % "test",
   "com.typesafe.akka" %% "akka-http-testkit" % "10.0.10" % "test",

@@ -19,7 +19,8 @@ import java.util.concurrent.CompletionStage;
 
 /**
  * Implement the CassandraReadSide processor to capture the CustomerEvents and either
- * add or remove customers from the read-side view for this CQRS implementation.
+ * add or remove customers from the read-side view for this CQRS implementation. Store the offset in the read-side
+ * so we only have to load the latest events if the application is restarted.
  */
 public class CustomerEventProcessor {
 
