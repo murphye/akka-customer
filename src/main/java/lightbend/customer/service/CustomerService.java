@@ -41,7 +41,7 @@ public class CustomerService {
 
     public CustomerService(ActorSystem actorSystem) {
         this.actorSystem = actorSystem;
-        
+
         ClusterShardingSettings clusterShardingSettings = ClusterShardingSettings.create(actorSystem);
 
         this.customerPersistentActor = ClusterSharding.get(this.actorSystem).start("CustomerPersistentActor",

@@ -13,7 +13,7 @@ This implementation uses Cassandra for both the write-side and read-side.
 
 * Akka HTTP (with HttpApp bootstrap)
 * Akka Persistence (with Cassandra)
-* Akka Persistence Query (for CQRS using eventsByTag TODO)
+* Akka Persistence Query (for CQRS using eventsByTag)
 * Akka Cluster
 * Akka Cluster Sharding
 * Lombok (for @Value immutable object)
@@ -38,8 +38,6 @@ This implementation uses Cassandra for both the write-side and read-side.
 
 # TODOs
 
-* Akka Cluster sharding for Persistent Actors
-* Improve code retrieving underlying Cassandra Session for read-side 
 * Switch from default Java serializer to ProtoBuf or something better
 
 
