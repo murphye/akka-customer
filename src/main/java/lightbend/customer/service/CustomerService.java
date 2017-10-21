@@ -3,6 +3,8 @@ package lightbend.customer.service;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
+import akka.cluster.sharding.ClusterSharding;
+import akka.cluster.sharding.ClusterShardingSettings;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.ExceptionHandler;
@@ -31,12 +33,20 @@ public class CustomerService {
 
     private final CustomerEventProcessor customerEventProcessor;
 
+    private final ActorRef customerPersistentActor;
+
     private Session cassandraSession;
 
     private final Timeout timeout = Timeout.durationToTimeout(FiniteDuration.apply(100, TimeUnit.MILLISECONDS));
 
     public CustomerService(ActorSystem actorSystem) {
         this.actorSystem = actorSystem;
+        
+        ClusterShardingSettings clusterShardingSettings = ClusterShardingSettings.create(actorSystem);
+
+        this.customerPersistentActor = ClusterSharding.get(this.actorSystem).start("CustomerPersistentActor",
+                Props.create(CustomerPersistentActor.class), clusterShardingSettings, CustomerPersistentActor.shardExtractor());
+
         this.customerEventProcessor = new CustomerEventProcessor(actorSystem);
 
         // Use the same read-side Cassandra session as the event processor which connects to same cluster/keyspace
@@ -46,9 +56,6 @@ public class CustomerService {
     }
 
     public Route addCustomer(Customer customer) {
-        Props customerPersistentActorProps = Props.create(CustomerPersistentActor.class, customer.getId());
-        ActorRef customerPersistentActor = actorSystem.actorOf(customerPersistentActorProps);
-
         CustomerCommand.AddCustomer addCustomer = new CustomerCommand.AddCustomer(customer);
         customerPersistentActor.tell(addCustomer, ActorRef.noSender());
 
@@ -56,14 +63,14 @@ public class CustomerService {
     }
 
     public Route getCustomer(String customerId) {
-        Props customerPersistentActorProps = Props.create(CustomerPersistentActor.class, customerId);
-        ActorRef customerPersistentActor = actorSystem.actorOf(customerPersistentActorProps);
-
-        CompletionStage<Customer> addCustomerResult = ask(customerPersistentActor, CustomerCommand.GetCustomer.INSTANCE, timeout).thenApply((Customer.class::cast));
+        CustomerCommand.GetCustomer getCustomer = new CustomerCommand.GetCustomer(customerId);
+        CompletionStage<Customer> addCustomerResult = ask(customerPersistentActor, getCustomer, timeout).thenApply((Customer.class::cast));
 
         final ExceptionHandler exceptionHandler = ExceptionHandler.newBuilder()
-                .match(CompletionException.class, x ->
-                        complete(StatusCodes.NOT_FOUND, "Customer is disabled"))
+                .match(CompletionException.class, x -> {
+                    x.printStackTrace();
+                        return complete(StatusCodes.NOT_FOUND, "Customer is disabled");
+                })
                 .build();
 
         return handleExceptions(exceptionHandler, () ->
@@ -71,10 +78,7 @@ public class CustomerService {
     }
 
     public Route disableCustomer(String customerId) {
-        Props customerPersistentActorProps = Props.create(CustomerPersistentActor.class, customerId);
-        ActorRef customerPersistentActor = actorSystem.actorOf(customerPersistentActorProps);
-
-        CustomerCommand.DisableCustomer disableCustomer = CustomerCommand.DisableCustomer.INSTANCE;
+        CustomerCommand.DisableCustomer disableCustomer = new CustomerCommand.DisableCustomer(customerId);
         customerPersistentActor.tell(disableCustomer, ActorRef.noSender());
 
         return complete(StatusCodes.ACCEPTED, "Customer disabled");

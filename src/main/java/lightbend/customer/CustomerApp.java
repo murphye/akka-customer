@@ -1,7 +1,6 @@
 package lightbend.customer;
 
 import akka.actor.ActorSystem;
-import akka.actor.Props;
 import akka.http.javadsl.server.HttpApp;
 import akka.http.javadsl.server.Route;
 import com.typesafe.config.Config;
@@ -42,7 +41,8 @@ public class CustomerApp extends HttpApp {
 
             final CustomerApp myServer = new CustomerApp(system);
             // This will start the server until the return key is pressed
-            myServer.startServer("localhost", 9000, system);
+            int httpPort = 9000;
+            myServer.startServer("localhost", httpPort, system);
         }
     }
 

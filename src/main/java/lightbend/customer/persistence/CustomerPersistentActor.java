@@ -1,23 +1,22 @@
 package lightbend.customer.persistence;
 
 import akka.actor.ActorSystem;
+import akka.cluster.sharding.ShardRegion;
 import akka.persistence.AbstractPersistentActor;
 import akka.persistence.SnapshotOffer;
 
 public class CustomerPersistentActor extends AbstractPersistentActor {
 
     private CustomerState state;
-    private String persistenceId;
     private ActorSystem actorSystem;
 
-    public CustomerPersistentActor(String persistenceId) {
-        this.persistenceId = persistenceId;
+    public CustomerPersistentActor() {
         this.actorSystem = this.getContext().getSystem();
     }
 
     @Override
     public String persistenceId() {
-        return persistenceId;
+        return self().path().parent().name() + "-" + self().path().name();
     }
 
     @Override
@@ -82,5 +81,23 @@ public class CustomerPersistentActor extends AbstractPersistentActor {
         return receiveBuilder()
         // No current behavior for disabled customers
         .build();
+    }
+
+    public static ShardRegion.MessageExtractor shardExtractor() {
+        return new CustomerPersistentActorShardMessageExtractor();
+    }
+
+    private static class CustomerPersistentActorShardMessageExtractor extends ShardRegion.HashCodeMessageExtractor {
+        CustomerPersistentActorShardMessageExtractor() {
+            super(100);
+        }
+
+        @Override
+        public String entityId(Object c) {
+            if (c instanceof CustomerCommand) {
+                return ((CustomerCommand) c).getCustomerId();
+            }
+            return null;
+        }
     }
 }
