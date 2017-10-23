@@ -5,6 +5,12 @@ import akka.cluster.sharding.ShardRegion;
 import akka.persistence.AbstractPersistentActor;
 import akka.persistence.SnapshotOffer;
 
+/**
+ * The CustomerPersistentActor handles commands and events while maintaining state through event sourcing.
+ *
+ * For commands, we want to be able to handle adding, disabling, and getting customers. Disabling effectively means
+ * no behaviors will affect the state.
+ */
 public class CustomerPersistentActor extends AbstractPersistentActor {
 
     private CustomerState state;

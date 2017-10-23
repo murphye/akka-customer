@@ -1,17 +1,12 @@
 package lightbend.customer.persistence;
 
-import akka.NotUsed;
 import akka.actor.ActorSystem;
 import akka.persistence.cassandra.query.javadsl.CassandraReadJournal;
-import akka.persistence.cassandra.session.javadsl.CassandraSession;
-import akka.persistence.query.EventEnvelope;
 import akka.persistence.query.Offset;
 import akka.persistence.query.PersistenceQuery;
 import akka.persistence.query.TimeBasedUUID;
 import akka.stream.ActorMaterializer;
-import akka.stream.javadsl.Source;
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.utils.UUIDs;
 import lightbend.customer.api.Customer;
 
 import java.util.UUID;
@@ -26,8 +21,6 @@ public class CustomerEventProcessor {
 
     private CassandraReadJournal readJournal;
 
-    private Source<String, NotUsed> sourceIds;
-
     private Session cassandraSession;
 
     public CustomerEventProcessor(final ActorSystem actorSystem) {
@@ -40,7 +33,7 @@ public class CustomerEventProcessor {
             this.cassandraSession = cassandraSession;
 
             // Check read-side state
-            KeyspaceMetadata keyspaceMetadata = s.getCluster().getMetadata().getKeyspace("customers"); // TODO: Get keyspace from config
+            KeyspaceMetadata keyspaceMetadata = s.getCluster().getMetadata().getKeyspace("customers");
             if(keyspaceMetadata == null || keyspaceMetadata.getTable("customer") == null) {
                 createKeyspace();
                 createOffsetTable();
@@ -71,19 +64,19 @@ public class CustomerEventProcessor {
     }
 
     private void createKeyspace() {
-        cassandraSession.execute("CREATE KEYSPACE IF NOT EXISTS customers " +
+        cassandraSession.executeAsync("CREATE KEYSPACE IF NOT EXISTS customers " +
                 "WITH REPLICATION = {'class':'SimpleStrategy', 'replication_factor':1}; "
         );
     }
 
     private void createTable() {
-        cassandraSession.execute("CREATE TABLE IF NOT EXISTS customers.customer ( " +
+        cassandraSession.executeAsync("CREATE TABLE IF NOT EXISTS customers.customer ( " +
                 "id TEXT, name TEXT, city TEXT, state TEXT, zipcode TEXT, PRIMARY KEY (id))"
         );
     }
 
     private void createOffsetTable() {
-        cassandraSession.execute("CREATE TABLE IF NOT EXISTS customers.offset (tag TEXT, time_uuid TIMEUUID, PRIMARY KEY (tag))");
+        cassandraSession.executeAsync("CREATE TABLE IF NOT EXISTS customers.offset (tag TEXT, time_uuid TIMEUUID, PRIMARY KEY (tag))");
     }
 
     private Offset getOffset(String tag) {
@@ -108,7 +101,7 @@ public class CustomerEventProcessor {
         bindUpdateOffset.setString("tag", tag);
         bindUpdateOffset.setUUID("time_uuid", timeUUID);
 
-        cassandraSession.execute(bindUpdateOffset);
+        cassandraSession.executeAsync(bindUpdateOffset);
     }
 
     private void processCustomerAdded(CustomerEvent.CustomerAdded customerAddedEvent) {
@@ -122,7 +115,7 @@ public class CustomerEventProcessor {
                 .setString("state", customer.getState())
                 .setString("zipcode", customer.getZipCode());
 
-        cassandraSession.execute(bindWriteCustomer);
+        cassandraSession.executeAsync(bindWriteCustomer);
     }
 
     private void processCustomerDisabled(CustomerEvent.CustomerDisabled customerDisabledEvent) {
@@ -131,6 +124,6 @@ public class CustomerEventProcessor {
         BoundStatement bindDisableCustomer = ps.bind();
         bindDisableCustomer.setString("id", customerDisabledEvent.getCustomer().getId());
 
-        cassandraSession.execute(bindDisableCustomer);
+        cassandraSession.executeAsync(bindDisableCustomer);
     }
 }

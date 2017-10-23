@@ -11,6 +11,7 @@ import lightbend.customer.service.CustomerService;
 import java.net.InetAddress;
 
 /**
+ * Bootstrap to start an Akka HTTP application.
  */
 public class CustomerApp extends HttpApp {
 
@@ -42,9 +43,9 @@ public class CustomerApp extends HttpApp {
             ActorSystem system = ActorSystem.create("customer", config);
 
             final CustomerApp myServer = new CustomerApp(system);
+
             // This will start the server until the return key is pressed
-            int httpPort = 9000;
-            myServer.startServer(InetAddress.getLocalHost().getHostName(), httpPort, system);
+            myServer.startServer(InetAddress.getLocalHost().getHostName(), 9000, system);
         }
     }
 

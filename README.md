@@ -12,6 +12,7 @@ This implementation uses Cassandra for both the write-side and read-side.
 # Features
 
 * Akka HTTP (with HttpApp bootstrap)
+* Bulkheading of blocking HTTP call with custom dispatcher
 * Akka Persistence (with Cassandra)
 * Akka Persistence Query (for CQRS using eventsByTag and a stored offset)
 * Akka Cluster
@@ -30,10 +31,11 @@ This implementation uses Cassandra for both the write-side and read-side.
 
 # Example curl commands
 
-1. curl -H "Content-Type: application/json" -X POST -d '{"name": "Eric Murphy", "city": "San Francisco", "state": "CA", "zipCode": "94105"}' http://localhost:8080/customer
-2. curl http://localhost:8080/customer/51c25a39-39b8-4937-b56b-5cca7f79acc1
-3. curl http://localhost:8080/customer
-4. curl -X PUT http://localhost:8080/customer/disable/51c25a39-39b8-4937-b56b-5cca7f79acc1
-5. curl http://localhost:8080/customer/51c25a39-39b8-4937-b56b-5cca7f79acc1 (run again to check disabled)
+1. curl -H "Content-Type: application/json" -X POST -d '{"name": "Eric Murphy", "city": "San Francisco", "state": "CA", "zipCode": "94105"}' http://localhost:9000/customer
+2. curl http://localhost:9000/customer/51c25a39-39b8-4937-b56b-5cca7f79acc1
+3. curl http://localhost:9000/customer
+4. curl -X PUT http://localhost:9000/customer/disable/51c25a39-39b8-4937-b56b-5cca7f79acc1
+5. curl http://localhost:9000/customer/51c25a39-39b8-4937-b56b-5cca7f79acc1 (run again to check disabled)
+
 
 

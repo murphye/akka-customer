@@ -6,6 +6,9 @@ import akka.persistence.journal.WriteEventAdapter;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Event Adapter to handle CustomerEvent tags for the read-side event processor.
+ */
 public class CustomerTaggingEventAdapter implements WriteEventAdapter {
 
     @Override

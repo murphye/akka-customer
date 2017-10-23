@@ -5,6 +5,7 @@ import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.cluster.sharding.ClusterSharding;
 import akka.cluster.sharding.ClusterShardingSettings;
+import akka.dispatch.MessageDispatcher;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.ExceptionHandler;
@@ -20,6 +21,7 @@ import lightbend.customer.persistence.CustomerEventProcessor;
 import lightbend.customer.persistence.CustomerPersistentActor;
 import scala.concurrent.duration.FiniteDuration;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -27,18 +29,21 @@ import java.util.concurrent.TimeUnit;
 import static akka.http.javadsl.server.Directives.*;
 import static akka.pattern.PatternsCS.ask;
 
+/**
+ * Implement the CustomerService interface to add, disable, get, and return all customers.
+ */
 public class CustomerService {
 
     private final ActorSystem actorSystem;
 
-    private final CustomerEventProcessor customerEventProcessor;
-
     private final ActorRef customerPersistentActor;
 
-    private Session cassandraSession;
+    private Session readSideCassandraSession;
 
-    private final Timeout timeout = Timeout.durationToTimeout(FiniteDuration.apply(100, TimeUnit.MILLISECONDS));
-
+    /**
+     * Constuctor which will setup cluster sharding and read-side event processor for this service.
+     * @param actorSystem The actor system
+     */
     public CustomerService(ActorSystem actorSystem) {
         this.actorSystem = actorSystem;
 
@@ -47,14 +52,18 @@ public class CustomerService {
         this.customerPersistentActor = ClusterSharding.get(this.actorSystem).start("CustomerPersistentActor",
                 Props.create(CustomerPersistentActor.class), clusterShardingSettings, CustomerPersistentActor.shardExtractor());
 
-        this.customerEventProcessor = new CustomerEventProcessor(actorSystem);
+        CustomerEventProcessor  customerEventProcessor = new CustomerEventProcessor(actorSystem);
 
-        // Use the same read-side Cassandra session as the event processor which connects to same cluster/keyspace
-        this.customerEventProcessor.getCassandraSession().thenAccept(s ->
-                this.cassandraSession = s
+        // Get the read-side Cassandra session from the event processor
+        customerEventProcessor.getCassandraSession().thenAccept(s ->
+                this.readSideCassandraSession = s
         );
     }
 
+    /**
+     * Add a new customer as part of the HTTP Request body in JSON format, and not containing the UUID.
+     * @return Confirmation the command has succeeded.
+     */
     public Route addCustomer(Customer customer) {
         CustomerCommand.AddCustomer addCustomer = new CustomerCommand.AddCustomer(customer);
         customerPersistentActor.tell(addCustomer, ActorRef.noSender());
@@ -62,8 +71,14 @@ public class CustomerService {
         return complete(StatusCodes.ACCEPTED, "Customer added");
     }
 
+    /**
+     * Return a customer from its known UUID directly from the entity.
+     * @param customerId UUID of the customer.
+     * @return The customer.
+     */
     public Route getCustomer(String customerId) {
         CustomerCommand.GetCustomer getCustomer = new CustomerCommand.GetCustomer(customerId);
+        Timeout timeout = Timeout.durationToTimeout(FiniteDuration.apply(100, TimeUnit.MILLISECONDS));
         CompletionStage<Customer> addCustomerResult = ask(customerPersistentActor, getCustomer, timeout).thenApply((Customer.class::cast));
 
         final ExceptionHandler exceptionHandler = ExceptionHandler.newBuilder()
@@ -77,6 +92,11 @@ public class CustomerService {
                 completeOKWithFuture(addCustomerResult, Jackson.<Customer>marshaller()));
     }
 
+    /**
+     * Disable a customer, which effectively does a soft delete, in that the customer record will no longer be visible.
+     * @param customerId UUID of the customer.
+     * @return Confirmation the command has succeeded.
+     */
     public Route disableCustomer(String customerId) {
         CustomerCommand.DisableCustomer disableCustomer = new CustomerCommand.DisableCustomer(customerId);
         customerPersistentActor.tell(disableCustomer, ActorRef.noSender());
@@ -84,25 +104,34 @@ public class CustomerService {
         return complete(StatusCodes.ACCEPTED, "Customer disabled");
     }
 
+    /**
+     * Return the customers from the read-side view.
+     * @return A list of customers.
+     */
     public Route getCustomers() {
-        // Creating a new CassandraSession doesn't seem to be supported with Akka Java DSL, so for now,
-        // reverting to using underlying Session object to synchronously retrieve the results
+        final MessageDispatcher dispatcher = actorSystem.dispatchers().lookup("http-blocking-dispatcher");
 
-        ResultSet resultSet = this.cassandraSession.execute("SELECT id, name, city, state, zipcode FROM customers.customer");
-        ImmutableList.Builder<Customer> builder = ImmutableList.builder();
+        // Execute blocking code inside of a CompletableFuture to isolate or "bulkhead" blocking operations
+        return completeOKWithFuture(CompletableFuture.supplyAsync(() -> {
 
-        while (resultSet.iterator().hasNext()) {
-            Row row = resultSet.iterator().next();
-            builder.add(
-                Customer.builder().id(row.getString("id"))
-                        .name(row.getString("name"))
-                        .city(row.getString("city"))
-                        .state(row.getString("state"))
-                        .zipCode(row.getString("zipcode"))
-                        .build()
-            );
-        }
+                    // WARNING: You should use executeAsync but using blocking call here as an example to show how to use dispatcher
+                    ResultSet resultSet = this.readSideCassandraSession.execute("SELECT id, name, city, state, zipcode FROM customers.customer");
+                    ImmutableList.Builder<Customer> builder = ImmutableList.builder();
 
-        return completeOK(builder.build(), Jackson.<ImmutableList<Customer>>marshaller());
+                    while (resultSet.iterator().hasNext()) {
+                        Row row = resultSet.iterator().next();
+                        builder.add(
+                                Customer.builder().id(row.getString("id"))
+                                        .name(row.getString("name"))
+                                        .city(row.getString("city"))
+                                        .state(row.getString("state"))
+                                        .zipCode(row.getString("zipcode"))
+                                        .build()
+                        );
+                    }
+
+                    return builder.build();
+                }, dispatcher // uses the "blocking dispatcher" that we configured, instead of the default dispatcher to isolate the blocking.
+        ), Jackson.<ImmutableList<Customer>>marshaller());
     }
 }
