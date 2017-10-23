@@ -1,7 +1,9 @@
+
 import com.typesafe.sbt.packager.docker._
 
 organization := "lightbend"
 name := "akka-customer"
+version := "0.0.1"
 
 scalaVersion := "2.12.2"
 
@@ -29,12 +31,16 @@ resolvers += "krasserm at bintray" at "http://dl.bintray.com/krasserm/maven"
 enablePlugins(JavaAppPackaging)
 
 dockerEntrypoint ++= Seq(
+  """-Dcassandra-journal.contact-points.0="$CASSANDRA_SERVICE_NAME"""",
+  """-Dhttp.address="$CUSTOMERSERVICE_BIND_IP"""",
+  """-Dhttp.port="$CUSTOMERSERVICE_BIND_PORT"""",
+  """-Dakka.actor.provider=cluster""",
   """-Dakka.remote.netty.tcp.hostname="$(eval "echo $AKKA_REMOTING_BIND_HOST")"""",
   """-Dakka.remote.netty.tcp.port="$AKKA_REMOTING_BIND_PORT"""",
   """$(IFS=','; I=0; for NODE in $AKKA_SEED_NODES; do echo "-Dakka.cluster.seed-nodes.$I=akka.tcp://$AKKA_ACTOR_SYSTEM_NAME@$NODE"; I=$(expr $I + 1); done)""",
   "-Dakka.io.dns.resolver=async-dns",
   "-Dakka.io.dns.async-dns.resolve-srv=true",
-  "-Dakka.io.dns.async-dns.resolv-conf=on"
+  "-Dakka.io.dns.async-dns.resolv-conf=on "
 )
 
 dockerCommands :=
@@ -43,6 +49,10 @@ dockerCommands :=
     case v => Seq(v)
   }
 
-dockerRepository := Some("mygroup")
+dockerRepository := Some("lightbend")
 
+dockerExposedPorts := Seq(9000, 2551)
+
+maintainer := "Eric Murphy <eric.murphy@lightbend.com>"
+// dockerBaseImage := "openjdk:8-jre-alpine" // TODO: Bash not installed Alpine
 dockerUpdateLatest := true

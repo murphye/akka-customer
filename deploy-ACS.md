@@ -48,25 +48,25 @@ To sign in, use a web browser to open the page https://aka.ms/devicelogin and en
 
 ### Create Kubernetes Cluster
 
-```az acs create --orchestrator-type kubernetes --resource-group customer --name lagom-customer --agent-vm-size Standard_DS1_v2 --agent-count 2```
+```az acs create --orchestrator-type kubernetes --resource-group customer --name akka-customer --agent-vm-size Standard_DS1_v2 --agent-count 2```
 
 ```
 {
-  "id": "/subscriptions/e8b1d29a-7336-49c8-9add-f9336020a5d1/resourceGroups/customer/providers/Microsoft.Resources/deployments/azurecli1508210824.1328449780",
-  "name": "azurecli1508210824.1328449780",
+  "id": "/subscriptions/e8b1d29a-7336-49c8-9add-f9336020a5d1/resourceGroups/customer/providers/Microsoft.Resources/deployments/azurecli1508717411.132882874053",
+  "name": "azurecli1508717411.132882874053",
   "properties": {
-    "correlationId": "30dd06e7-e035-4d9d-8fa6-fbda0c6b54fb",
+    "correlationId": "44974fc5-1134-4038-9827-08d0d6509e4d",
     "debugSetting": null,
     "dependencies": [],
     "mode": "Incremental",
     "outputs": {
       "masterFQDN": {
         "type": "String",
-        "value": "lagom-cust-customer-e8b1d2mgmt.eastus.cloudapp.azure.com"
+        "value": "akka-custo-customer-e8b1d2mgmt.eastus.cloudapp.azure.com"
       },
       "sshMaster0": {
         "type": "String",
-        "value": "ssh azureuser@lagom-cust-customer-e8b1d2mgmt.eastus.cloudapp.azure.com -A -p 22"
+        "value": "ssh azureuser@akka-custo-customer-e8b1d2mgmt.eastus.cloudapp.azure.com -A -p 22"
       }
     },
     "parameters": {
@@ -96,7 +96,7 @@ To sign in, use a web browser to open the page https://aka.ms/devicelogin and en
     "provisioningState": "Succeeded",
     "template": null,
     "templateLink": null,
-    "timestamp": "2017-10-17T03:34:29.656097+00:00"
+    "timestamp": "2017-10-23T00:18:47.228638+00:00"
   },
   "resourceGroup": "customer"
 }
@@ -104,7 +104,7 @@ To sign in, use a web browser to open the page https://aka.ms/devicelogin and en
 
 ### Get Credentials (for kubectl)
 
-```az acs kubernetes get-credentials --resource-group=customer --name=lagom-customer```
+```az acs kubernetes get-credentials --resource-group=customer --name=akka-customer```
 
 ### Create Container Registry
 
@@ -113,7 +113,7 @@ To sign in, use a web browser to open the page https://aka.ms/devicelogin and en
 ```
 {
   "adminUserEnabled": false,
-  "creationDate": "2017-10-17T03:38:31.456769+00:00",
+  "creationDate": "2017-10-23T00:20:07.281827+00:00",
   "id": "/subscriptions/e8b1d29a-7336-49c8-9add-f9336020a5d1/resourceGroups/customer/providers/Microsoft.ContainerRegistry/registries/customerRegistry",
   "location": "eastus",
   "loginServer": "customerregistry.azurecr.io",
@@ -149,53 +149,72 @@ Login Succeeded
 ****************************
 ***  Uploading customer   ***
 ****************************
-The push refers to a repository [customerregistry.azurecr.io/lightbend/customer-impl]
-3f6156a2aad4: Pushed 
-762429e05518: Pushed 
-2be465c0fdf6: Pushed 
-5bef08742407: Pushed 
-latest: digest: sha256:9e93455164cb837a36503ec2f469d3b314c90405936352ea006269b9f4f54f1d size: 1159
+The push refers to a repository [customerregistry.azurecr.io/lightbend/akka-customer]
+aa70fa8d45c3: Pushed 
+1e14c24a1e00: Pushed 
+30688d580ca7: Pushed 
+9b790cee2175: Pushed 
+348667646bbd: Pushed 
+1d381f39fece: Pushed 
+e6683fd09097: Pushed 
+ffe8422597ee: Pushed 
+c2dca236d8e6: Pushed 
+d4417cb76edb: Pushed 
+0dc1ec77adb3: Pushed 
+a75caa09eb1f: Pushed 
+latest: digest: sha256:0171f2371a6335597195748dcea02cf18a29552f6a98035461c8c2192435d7e0 size: 2842
 ****************************
 ***  Deploying customer   ***
 ****************************
 service "customerservice-akka-remoting" created
 service "customerservice" created
 statefulset "customerservice" created
-waiting....................
+waiting......................................................................................................
+****************************
+***  Deploying nginx     ***
+****************************
+ingress "customer-ingress" created
+deployment "nginx-default-backend" created
+service "nginx-default-backend" created
+deployment "nginx-ingress-controller" created
+service "nginx-ingress" created
+waiting................
 NAME                                          READY     STATUS    RESTARTS   AGE
-po/cassandra-0                                1/1       Running   0          16m
-po/customerservice-0                          1/1       Running   0          27s
-po/nginx-default-backend-1866436208-vt04q     1/1       Running   0          15m
-po/nginx-ingress-controller-667491271-5060h   1/1       Running   0          15m
+po/cassandra-0                                1/1       Running   0          8m
+po/customerservice-0                          1/1       Running   0          2m
+po/customerservice-1                          1/1       Running   0          1m
+po/customerservice-2                          1/1       Running   0          26s
+po/nginx-default-backend-1866436208-0vhzb     1/1       Running   0          23s
+po/nginx-ingress-controller-667491271-7xbdc   1/1       Running   0          23s
 
-NAME                                CLUSTER-IP     EXTERNAL-IP     PORT(S)                      AGE
-svc/cassandra                       10.0.160.69    <none>          9042/TCP                     16m
-svc/customerservice                 None           <none>          9000/TCP                     28s
-svc/customerservice-akka-remoting   10.0.211.244   <none>          2551/TCP                     28s
-svc/kubernetes                      10.0.0.1       <none>          443/TCP                      21m
-svc/nginx-default-backend           10.0.54.68     <none>          80/TCP                       15m
-svc/nginx-ingress                   10.0.87.128    13.90.212.201   80:31213/TCP,443:30481/TCP   15m
+NAME                                CLUSTER-IP     EXTERNAL-IP   PORT(S)                      AGE
+svc/cassandra                       10.0.237.122   <none>        9042/TCP                     8m
+svc/customerservice                 None           <none>        9000/TCP                     2m
+svc/customerservice-akka-remoting   10.0.27.39     <none>        2551/TCP                     2m
+svc/kubernetes                      10.0.0.1       <none>        443/TCP                      9m
+svc/nginx-default-backend           10.0.132.20    <none>        80/TCP                       23s
+svc/nginx-ingress                   10.0.199.222   13.90.151.182 80:30931/TCP,443:32009/TCP   22s
 
 NAME                           DESIRED   CURRENT   AGE
-statefulsets/cassandra         1         1         16m
-statefulsets/customerservice   1         1         27s
+statefulsets/cassandra         1         1         8m
+statefulsets/customerservice   3         3         2m
 
 NAME                              DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-deploy/nginx-default-backend      1         1         1            1           15m
-deploy/nginx-ingress-controller   1         1         1            1           15m
+deploy/nginx-default-backend      1         1         1            1           23s
+deploy/nginx-ingress-controller   1         1         1            1           23s
 
 NAME                                    DESIRED   CURRENT   READY     AGE
-rs/nginx-default-backend-1866436208     1         1         1         15m
-rs/nginx-ingress-controller-667491271   1         1         1         15m
+rs/nginx-default-backend-1866436208     1         1         1         23s
+rs/nginx-ingress-controller-667491271   1         1         1         23s
 ```
 
 #### Add a customer
 
-```curl -H "Content-Type: application/json" -X POST -d '{"name": "Eric Murphy", "city": "San Francisco", "state": "CA", "zipCode": "94105"}' http://13.90.212.201/customer```
+```curl -H "Content-Type: application/json" -X POST -d '{"name": "Eric Murphy", "city": "San Francisco", "state": "CA", "zipCode": "94105"}' http://13.90.151.182/customer```
 
 ### Delete Kubernetes Cluster
 
-```az acs delete --resource-group=customer --name=lagom-customer```
+```az acs delete --resource-group=customer --name=akka-customer```
 
 ### Delete Container Registry
 

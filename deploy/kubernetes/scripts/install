@@ -161,7 +161,7 @@ if [ "$BUILD_CUSTOMER" = 1 ]; then
     echo '***  Building customer    ***'
     echo '****************************'
 
-    (cd "$RESOURCES_PATH/../../.." && mvn clean package docker:build)
+    (cd "$RESOURCES_PATH/../../.." && sbt docker:publishLocal)
 fi
 
 if [ "$UPLOAD_CUSTOMER" = 1 ]; then

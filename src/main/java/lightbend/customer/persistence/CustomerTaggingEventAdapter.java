@@ -6,7 +6,6 @@ import akka.persistence.journal.WriteEventAdapter;
 import java.util.HashSet;
 import java.util.Set;
 
-// TODO: Would be used by Akka Persistence Query to get events by tag
 public class CustomerTaggingEventAdapter implements WriteEventAdapter {
 
     @Override
@@ -25,5 +24,4 @@ public class CustomerTaggingEventAdapter implements WriteEventAdapter {
     public String manifest(Object event) {
         return "";
     }
-
 }

@@ -8,6 +8,8 @@ import com.typesafe.config.ConfigFactory;
 import lightbend.customer.api.CustomerApi;
 import lightbend.customer.service.CustomerService;
 
+import java.net.InetAddress;
+
 /**
  */
 public class CustomerApp extends HttpApp {
@@ -42,7 +44,7 @@ public class CustomerApp extends HttpApp {
             final CustomerApp myServer = new CustomerApp(system);
             // This will start the server until the return key is pressed
             int httpPort = 9000;
-            myServer.startServer("localhost", httpPort, system);
+            myServer.startServer(InetAddress.getLocalHost().getHostName(), httpPort, system);
         }
     }
 

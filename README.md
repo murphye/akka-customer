@@ -15,10 +15,10 @@ This implementation uses Cassandra for both the write-side and read-side.
 * Akka Persistence (with Cassandra)
 * Akka Persistence Query (for CQRS using eventsByTag and a stored offset)
 * Akka Cluster
-* Akka Cluster Sharding for PersistentActors
+* Akka Cluster Sharding for CustomerPersistentActor
 * Kryo Serializer
 * Lombok (for @Value immutable object)
-* TODO (switch from Guava): PCollections (for PSequence immutable list)
+* Guava for ImmutableList (you can use PCollections too)
 * SBT Revolver for hot reloading of application after code changes (see SBT commands)
 * Docker image build and publish (see SBT commands)
 * Kubernetes deployment script (see other .md files)

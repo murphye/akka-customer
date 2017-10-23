@@ -6,7 +6,7 @@
   },
   "spec": {
     "serviceName": "customerservice",
-    "replicas": 1,
+    "replicas": 3,
     "template": {
       "metadata": {
         "labels": {
@@ -17,7 +17,7 @@
         "containers": [
           {
             "name": "customerservice",
-            "image": "lightbend/customer-impl",
+            "image": "lightbend/akka-customer",
             "imagePullPolicy": "Never",
             "ports": [
               {
@@ -32,7 +32,7 @@
             "env": [
               {
                 "name": "CASSANDRA_SERVICE_NAME",
-                "value": "_native._tcp.cassandra.default.svc.cluster.local"
+                "value": "cassandra.default.svc.cluster.local"
               },
               {
                 "name": "APPLICATION_SECRET",
@@ -48,7 +48,7 @@
               },
               {
                 "name": "AKKA_ACTOR_SYSTEM_NAME",
-                "value": "customerservice-v1"
+                "value": "customer"
               },
               {
                 "name": "AKKA_REMOTING_BIND_PORT",
@@ -79,9 +79,8 @@
                 }
               }
             ],
-            "readinessProbe": {
-              "httpGet": {
-                "path": "/_status/circuit-breaker/current",
+            "livenessProbe": {
+              "tcpSocket": {
                 "port": 9000
               },
               "initialDelaySeconds": 5,
