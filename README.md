@@ -29,6 +29,10 @@ This implementation uses Cassandra for both the write-side and read-side.
 * `~reStart`, `reStop` [Triggered Restarts via SBT Revolver](https://github.com/spray/sbt-revolver) (Restart app after Java source changes)
 * `docker:publishLocal` [JAR and Docker images via SBT Native Packager](https://github.com/sbt/sbt-native-packager)
 
+# Cassandra
+
+You must be running Cassandra separately when executing on local machine; default port is 9042.
+
 # Example curl commands
 
 1. curl -H "Content-Type: application/json" -X POST -d '{"name": "Eric Murphy", "city": "San Francisco", "state": "CA", "zipCode": "94105"}' http://localhost:9000/customer
